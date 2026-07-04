@@ -123,6 +123,9 @@ const TRANSLATIONS = {
     hadith_title:"Hadith of the Day",
     location_title:"Your Location",
     prayers_title:"Prayer Times",
+    settings_title:"Settings",
+    calc_method:"Calculation Method",
+    adjustment:"Fine-Tune (minutes)",
   },
   ar: {
     title:"مواقيت الصلاة",subtitle:"مواقيت الصلاة للمسلمين حول العالم",
@@ -140,12 +143,22 @@ const TRANSLATIONS = {
     hadith_title:"حديث اليوم",
     location_title:"موقعك",
     prayers_title:"أوقات الصلاة",
+    settings_title:"الإعدادات",
+    calc_method:"طريقة الحساب",
+    adjustment:"الضبط (بالدقائق)",
   },
 };
 
+const METHODS = [
+  {id:1,name:"University of Islamic Sciences, Karachi",nameAr:"جامعة العلوم الإسلامية، كراتشي"},
+  {id:2,name:"Islamic Society of North America (ISNA)",nameAr:"الجمعية الإسلامية لأمريكا الشمالية"},
+  {id:3,name:"Muslim World League",nameAr:"رابطة العالم الإسلامي"},
+  {id:4,name:"Umm Al-Qura, Makkah",nameAr:"أم القرى، مكة"},
+  {id:5,name:"Egyptian General Authority of Survey",nameAr:"الهيئة المصرية العامة للمساحة"},
+  {id:12,name:"Diyanet İşleri Başkanlığı, Turkey",nameAr:"ديانة تركيا"},
+];
 const ATHAN_URL = "https://www.islamcan.com/audio/athan/azan1.mp3";
 const ALADHAN_BASE = "https://api.aladhan.com/v1";
-const METHOD = 3;
 
 const PRAYER_ORDER = ["Fajr","Dhuhr","Asr","Maghrib","Isha"];
 const PRAYER_KEYS = ["Fajr","Sunrise","Dhuhr","Asr","Maghrib","Isha"];
@@ -154,6 +167,8 @@ let state = {
   city: localStorage.getItem("pt_city") || "",
   country: localStorage.getItem("pt_country") || "",
   lang: localStorage.getItem("pt_lang") || "en",
+  method: parseInt(localStorage.getItem("pt_method")) || 5,
+  adjustment: parseInt(localStorage.getItem("pt_adjustment")) || 0,
   prayers: null,
   nextPrayer: null,
   athanPlayed: {},
@@ -168,6 +183,7 @@ let athanCheckInterval = null;
 
 function init() {
   populateCountries();
+  populateMethods();
   restoreState();
   setupEventListeners();
   setLanguage(state.lang);
@@ -203,10 +219,22 @@ function populateCountries() {
   });
 }
 
+function populateMethods() {
+  const s = document.getElementById("methodSelect");
+  s.innerHTML = '';
+  METHODS.forEach(m => {
+    const o = document.createElement("option");
+    o.value = m.id; o.textContent = m.name; s.appendChild(o);
+  });
+}
+
 function restoreState() {
   if (state.city) document.getElementById("cityInput").value = state.city;
   if (state.country) document.getElementById("countrySelect").value = state.country;
   if (state.lang === "ar") document.getElementById("langToggle").checked = true;
+  document.getElementById("methodSelect").value = state.method;
+  document.getElementById("adjustmentRange").value = state.adjustment;
+  document.getElementById("adjustmentValue").textContent = state.adjustment > 0 ? `+${state.adjustment}` : state.adjustment;
 }
 
 function setupEventListeners() {
@@ -215,6 +243,24 @@ function setupEventListeners() {
   document.getElementById("langToggle").addEventListener("change",e => setLanguage(e.target.checked?"ar":"en"));
   document.getElementById("testAthanBtn").addEventListener("click",playAthan);
   document.getElementById("coffeeBtn").addEventListener("click",copyInstapay);
+
+  document.getElementById("methodSelect").addEventListener("change",function() {
+    state.method = parseInt(this.value);
+    localStorage.setItem("pt_method",state.method);
+    if (state.city && state.country) fetchPrayerTimes(state.city,state.country);
+  });
+
+  document.getElementById("adjustmentRange").addEventListener("input",function() {
+    state.adjustment = parseInt(this.value);
+    localStorage.setItem("pt_adjustment",state.adjustment);
+    document.getElementById("adjustmentValue").textContent = state.adjustment > 0 ? `+${state.adjustment}` : state.adjustment;
+    if (state.prayers) {
+      const prayers = {};
+      PRAYER_KEYS.forEach(k => { prayers[k] = state.prayers[k]; });
+      displayPrayers(prayers);
+      updateNextPrayer(prayers);
+    }
+  });
 
   const cityInput = document.getElementById("cityInput");
   cityInput.addEventListener("input",handleCityInput);
@@ -331,7 +377,7 @@ async function fetchByCoords(lat,lng) {
   showToast(TRANSLATIONS[state.lang].fetching);
   setLoading(true);
   try {
-    const r = await fetch(`${ALADHAN_BASE}/timingsByLatLng?lat=${lat}&lng=${lng}&method=${METHOD}`);
+    const r = await fetch(`${ALADHAN_BASE}/timingsByLatLng?lat=${lat}&lng=${lng}&method=${state.method}`);
     const d = await r.json();
     if (d.code === 200) {
       processPrayerData(d);
@@ -358,7 +404,7 @@ async function fetchPrayerTimes(city,country) {
   showToast(TRANSLATIONS[state.lang].fetching);
   setLoading(true);
   try {
-    const r = await fetch(`${ALADHAN_BASE}/timingsByCity?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}&method=${METHOD}`);
+    const r = await fetch(`${ALADHAN_BASE}/timingsByCity?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}&method=${state.method}`);
     const d = await r.json();
     if (d.code === 200) {
       processPrayerData(d);
@@ -384,12 +430,21 @@ function processPrayerData(data) {
   athanCheckInterval = setInterval(() => checkAthan(prayers),10000);
   document.getElementById("currentDate").textContent = date.readable;
   setTimeout(() => checkAthan(prayers),1000);
+  const methodName = state.lang === "ar"
+    ? METHODS.find(m => m.id === state.method)?.nameAr
+    : METHODS.find(m => m.id === state.method)?.name;
+  document.getElementById("methodDisplay").textContent = methodName ? `(${methodName})` : "";
 }
 
 function formatTime(t) {
-  const [h,m] = t.split(":").map(Number);
+  let [h,m] = t.split(":").map(Number);
+  let total = h * 60 + m + state.adjustment;
+  total = ((total % 1440) + 1440) % 1440;
+  h = Math.floor(total / 60);
+  m = total % 60;
   const p = h >= 12 ? "PM" : "AM";
-  return `${h % 12 || 12}:${String(m).padStart(2,"0")} ${p}`;
+  h = h % 12 || 12;
+  return `${h}:${String(m).padStart(2,"0")} ${p}`;
 }
 
 function displayPrayers(p) {

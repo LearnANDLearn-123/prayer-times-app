@@ -593,6 +593,84 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* ===== SETTINGS SECTION ===== */
+.settings-row {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.settings-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-light);
+}
+
+.settings-select {
+  width: 100%;
+}
+
+.adjustment-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.adjustment-range {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: #E0E5EA;
+  outline: none;
+  cursor: pointer;
+}
+
+.adjustment-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(74, 144, 217, 0.3);
+  border: 2px solid white;
+}
+
+.adjustment-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  border: 2px solid white;
+}
+
+.adjustment-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--primary);
+  min-width: 36px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.method-display {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+  min-height: 1.2em;
+}
+
 /* ===== HADITH SECTION ===== */
 .hadith-arabic {
   font-family: var(--font-ar);

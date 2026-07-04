@@ -120,6 +120,27 @@
       </div>
     </section>
 
+    <section class="section settings-section">
+      <div class="section-header">
+        <span class="section-icon">⚙️</span>
+        <h2 class="section-title" data-i18n="settings_title">Settings</h2>
+      </div>
+      <div class="settings-row">
+        <div class="settings-group">
+          <label class="settings-label" data-i18n="calc_method">Calculation Method</label>
+          <select id="methodSelect" class="input select settings-select"></select>
+        </div>
+        <div class="settings-group">
+          <label class="settings-label" data-i18n="adjustment">Fine-Tune (minutes)</label>
+          <div class="adjustment-row">
+            <input type="range" id="adjustmentRange" class="adjustment-range" min="-30" max="30" value="0">
+            <span class="adjustment-value" id="adjustmentValue">0</span>
+          </div>
+        </div>
+      </div>
+      <p class="method-display" id="methodDisplay"></p>
+    </section>
+
     <section class="section hadith-section" id="hadithSection">
       <div class="section-header">
         <span class="section-icon">📜</span>
