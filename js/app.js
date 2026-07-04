@@ -200,6 +200,13 @@ function init() {
   } else {
     autoDetectLocation();
   }
+  registerSW();
+}
+
+function registerSW() {
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  }
 }
 
 function autoDetectLocation() {
