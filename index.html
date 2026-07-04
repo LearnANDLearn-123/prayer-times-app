@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Accurate prayer times for Muslims worldwide with Athan notifications">
+  <title>Prayer Times - مواقيت الصلاة</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Naskh+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="header-top">
+        <h1 class="title" data-i18n="title">Prayer Times</h1>
+        <label class="toggle-lang" aria-label="Toggle language">
+          <span class="toggle-lang-en">EN</span>
+          <input type="checkbox" id="langToggle">
+          <span class="toggle-slider"></span>
+          <span class="toggle-lang-ar">AR</span>
+        </label>
+      </div>
+      <p class="subtitle" data-i18n="subtitle">Muslim Prayer Times Worldwide</p>
+    </header>
+
+    <section class="location-section">
+      <button class="btn btn-gps" id="gpsBtn" data-i18n="gps_btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 8 12 8 12s8-6.6 8-12a8 8 0 0 0-8-8z"/></svg>
+        <span data-i18n="gps_btn">Detect My Location</span>
+      </button>
+      <div class="location-inputs">
+        <input type="text" id="cityInput" class="input" placeholder="City" data-i18n-placeholder="city_placeholder" autocomplete="off">
+        <select id="countrySelect" class="input select"></select>
+        <button class="btn btn-primary" id="fetchBtn" data-i18n="fetch_btn">Get Times</button>
+      </div>
+      <p class="location-display" id="locationDisplay"></p>
+    </section>
+
+    <section class="date-bar">
+      <p id="currentDate" class="current-date">—</p>
+      <p id="currentTime" class="current-time">--:--:--</p>
+    </section>
+
+    <section class="next-prayer-card" id="nextPrayerCard">
+      <p class="next-prayer-label" data-i18n="next_prayer">Next Prayer</p>
+      <p class="next-prayer-name" id="nextPrayerName">—</p>
+      <p class="next-prayer-countdown" id="nextPrayerCountdown">--:--:--</p>
+      <p class="next-prayer-time" id="nextPrayerTime"></p>
+      <div class="next-prayer-progress" id="progressRing">
+        <svg viewBox="0 0 100 100">
+          <circle class="bg" cx="50" cy="50" r="45"/>
+          <circle class="fg" cx="50" cy="50" r="45" id="progressCircle"/>
+        </svg>
+      </div>
+    </section>
+
+    <section class="prayers-grid" id="prayersGrid">
+      <div class="prayer-card" data-prayer="Fajr">
+        <span class="prayer-icon">🌙</span>
+        <p class="prayer-name" data-i18n="fajr">Fajr</p>
+        <p class="prayer-time" id="prayer-fajr">--:--</p>
+      </div>
+      <div class="prayer-card" data-prayer="Sunrise">
+        <span class="prayer-icon">☀️</span>
+        <p class="prayer-name" data-i18n="sunrise">Sunrise</p>
+        <p class="prayer-time" id="prayer-sunrise">--:--</p>
+      </div>
+      <div class="prayer-card" data-prayer="Dhuhr">
+        <span class="prayer-icon">🌞</span>
+        <p class="prayer-name" data-i18n="dhuhr">Dhuhr</p>
+        <p class="prayer-time" id="prayer-dhuhr">--:--</p>
+      </div>
+      <div class="prayer-card" data-prayer="Asr">
+        <span class="prayer-icon">🌤️</span>
+        <p class="prayer-name" data-i18n="asr">Asr</p>
+        <p class="prayer-time" id="prayer-asr">--:--</p>
+      </div>
+      <div class="prayer-card" data-prayer="Maghrib">
+        <span class="prayer-icon">🌅</span>
+        <p class="prayer-name" data-i18n="maghrib">Maghrib</p>
+        <p class="prayer-time" id="prayer-maghrib">--:--</p>
+      </div>
+      <div class="prayer-card" data-prayer="Isha">
+        <span class="prayer-icon">🌃</span>
+        <p class="prayer-name" data-i18n="isha">Isha</p>
+        <p class="prayer-time" id="prayer-isha">--:--</p>
+      </div>
+    </section>
+
+    <section class="controls">
+      <button class="btn btn-athan-test" id="testAthanBtn" data-i18n="test_athan">
+        <span>🔊</span> <span data-i18n="test_athan">Test Athan</span>
+      </button>
+    </section>
+
+    <footer class="footer">
+      <button class="btn btn-coffee" id="coffeeBtn">
+        <span>☕</span>
+        <span data-i18n="buy_coffee">Buy Me a Coffee</span>
+      </button>
+      <p class="footer-note" data-i18n="footer">Powered by Aladhan API · Al-Minshawi Athan</p>
+    </footer>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
