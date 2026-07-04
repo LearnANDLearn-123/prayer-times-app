@@ -255,22 +255,42 @@ body {
   cursor: pointer;
   display: flex;
   align-items: center;
+  position: relative;
 }
 
 .toggle-dark input {
   display: none;
 }
 
-.toggle-dark-icon {
-  font-size: 1.3rem;
-  line-height: 1;
+.dark-slider {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #1A2332;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
   transition: var(--transition);
-  filter: grayscale(0.5);
-  display: block;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  border: 1.5px solid #E0E5EA;
 }
 
-.toggle-dark input:checked + .toggle-dark-icon {
-  filter: none;
+.dark-slider::after {
+  content: '🌙';
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.toggle-dark input:checked + .dark-slider {
+  background: #FFD700;
+  border-color: #FFD700;
+  box-shadow: 0 2px 12px rgba(255, 215, 0, 0.3);
+}
+
+.toggle-dark input:checked + .dark-slider::after {
+  content: '☀️';
 }
 
 /* ===== AYAH SECTION ===== */

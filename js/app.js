@@ -157,7 +157,10 @@ const METHODS = [
   {id:5,name:"Egyptian General Authority of Survey",nameAr:"الهيئة المصرية العامة للمساحة"},
   {id:12,name:"Diyanet İşleri Başkanlığı, Turkey",nameAr:"ديانة تركيا"},
 ];
-const ATHAN_URL = "https://www.muslimcentral.com/audio/adhan/adhan.mp3";
+const ATHAN_URLS = [
+  "https://www.muslimcentral.com/audio/adhan/adhan.mp3",
+  "https://www.islamcan.com/audio/athan/azan1.mp3",
+];
 const ALADHAN_BASE = "https://api.aladhan.com/v1";
 
 const PRAYER_ORDER = ["Fajr","Dhuhr","Asr","Maghrib","Isha"];
@@ -285,6 +288,7 @@ function setupEventListeners() {
 
   document.addEventListener("click",e => {
     if (!e.target.closest(".autocomplete-wrap")) hideAutocomplete();
+    if (athanCtx && athanCtx.state === "suspended") athanCtx.resume();
   });
 }
 
@@ -574,9 +578,77 @@ function checkAthan(prayers) {
 
 function playAthan() {
   if (athanAudio) { athanAudio.pause(); athanAudio.currentTime = 0; }
-  athanAudio = new Audio(ATHAN_URL);
-  athanAudio.play().catch(() => {});
+
+  function tryUrl(idx) {
+    if (idx >= ATHAN_URLS.length) { playAthanSynth(); return; }
+    athanAudio = new Audio(ATHAN_URLS[idx]);
+    athanAudio.onerror = () => tryUrl(idx + 1);
+    athanAudio.play().catch(() => tryUrl(idx + 1));
+  }
+  tryUrl(0);
   showToast(TRANSLATIONS[state.lang].athan_playing);
+}
+
+let athanSynthPlaying = false;
+let athanCtx = null;
+
+function getAudioCtx() {
+  if (!athanCtx) athanCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (athanCtx.state === "suspended") athanCtx.resume();
+  return athanCtx;
+}
+
+function playAthanSynth() {
+  if (athanSynthPlaying) return;
+  athanSynthPlaying = true;
+  try {
+    const ctx = getAudioCtx();
+    // Adhan melodic pattern: notes (frequency, startTime, duration)
+    const notes = [
+      // "Allahu Akbar" rising pattern (x4)
+      [440,0,0.4],[523,0.4,0.35],[659,0.75,0.35],[784,1.1,0.6],
+      [392,1.7,0.5],[440,2.2,0.4],[523,2.6,0.35],[659,2.95,0.35],[784,3.3,0.6],
+      [349,3.9,0.5],[392,4.4,0.4],[440,4.8,0.35],[587,5.15,0.35],[698,5.5,0.6],
+      [330,6.1,0.5],[392,6.6,0.4],[440,7.0,0.35],[523,7.35,0.35],[659,7.7,0.6],
+      // "Ashhadu" phrase
+      [494,8.3,0.5],[440,8.8,0.4],[392,9.2,0.6],[523,9.8,0.5],[440,10.3,0.4],[392,10.7,0.8],
+      [494,11.5,0.5],[440,12.0,0.4],[392,12.4,0.6],[523,13.0,0.5],[440,13.5,0.4],[392,13.9,0.8],
+      // "Hayya 'ala" phrase
+      [523,14.7,0.6],[659,15.3,0.5],[587,15.8,0.4],[523,16.2,0.6],[440,16.8,0.6],
+      [523,17.4,0.6],[659,18.0,0.5],[587,18.5,0.4],[523,18.9,0.6],[440,19.5,0.6],
+      // "Hayya 'alal falah" phrase
+      [494,20.1,0.5],[440,20.6,0.4],[392,21.0,0.5],[440,21.5,0.4],[494,21.9,0.6],
+      [494,22.5,0.5],[440,23.0,0.4],[392,23.4,0.5],[440,23.9,0.4],[494,24.3,0.6],
+      // Final "Allahu Akbar" and "La ilaha illa Allah"
+      [440,24.9,0.5],[523,25.4,0.5],[659,25.9,0.5],[784,26.4,0.8],
+      [440,27.2,0.5],[523,27.7,0.5],[659,28.2,0.5],[784,28.7,0.8],
+      [392,29.5,0.6],[330,30.1,0.6],[262,30.7,1.0],
+    ];
+    const gain = ctx.createGain();
+    gain.gain.value = 0.3;
+    gain.connect(ctx.destination);
+    notes.forEach(([freq, start, dur]) => {
+      const osc = ctx.createOscillator();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      const noteGain = ctx.createGain();
+      noteGain.gain.setValueAtTime(0, start);
+      noteGain.gain.linearRampToValueAtTime(0.3, start + 0.05);
+      noteGain.gain.linearRampToValueAtTime(0.3, start + dur - 0.1);
+      noteGain.gain.linearRampToValueAtTime(0, start + dur);
+      osc.connect(noteGain);
+      noteGain.connect(gain);
+      osc.start(start);
+      osc.stop(start + dur + 0.05);
+    });
+    const totalDur = 32;
+    gain.gain.setValueAtTime(0.3, 0);
+    gain.gain.linearRampToValueAtTime(0.3, totalDur - 0.5);
+    gain.gain.linearRampToValueAtTime(0, totalDur);
+    setTimeout(() => { athanSynthPlaying = false; }, totalDur * 1000 + 500);
+  } catch(e) {
+    athanSynthPlaying = false;
+  }
 }
 
 function copyInstapay() {
