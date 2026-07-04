@@ -126,6 +126,7 @@ const TRANSLATIONS = {
     settings_title:"Settings",
     calc_method:"Calculation Method",
     adjustment:"Fine-Tune (minutes)",
+    install:"Install App",
   },
   ar: {
     title:"مواقيت الصلاة",subtitle:"مواقيت الصلاة للمسلمين حول العالم",
@@ -146,6 +147,7 @@ const TRANSLATIONS = {
     settings_title:"الإعدادات",
     calc_method:"طريقة الحساب",
     adjustment:"الضبط (بالدقائق)",
+    install:"تثبيت التطبيق",
   },
 };
 
@@ -203,10 +205,27 @@ function init() {
   registerSW();
 }
 
+let deferredInstall = null;
+
 function registerSW() {
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js").catch(() => {});
   }
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredInstall = e;
+    document.getElementById("installBtn").classList.add("show");
+  });
+  window.addEventListener("appinstalled", () => {
+    deferredInstall = null;
+    document.getElementById("installBtn").classList.remove("show");
+  });
+}
+
+function installApp() {
+  if (!deferredInstall) return;
+  deferredInstall.prompt();
+  deferredInstall.userChoice.then(() => { deferredInstall = null; });
 }
 
 function autoDetectLocation() {

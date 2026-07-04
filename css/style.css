@@ -802,6 +802,31 @@ body {
   gap: 8px;
 }
 
+.btn-install {
+  background: linear-gradient(135deg, var(--teal), var(--teal-light));
+  color: white;
+  border: none;
+  padding: 12px 28px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: none;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.btn-install.show {
+  display: inline-flex;
+}
+
+.btn-install:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(26, 138, 122, 0.3);
+}
+
 .btn-athan-test:hover {
   border-color: var(--accent);
   color: var(--accent);
