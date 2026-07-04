@@ -17,12 +17,18 @@
     <header class="header">
       <div class="header-top">
         <h1 class="title" data-i18n="title">Prayer Times</h1>
-        <label class="toggle-lang" aria-label="Toggle language">
-          <span class="toggle-lang-en">EN</span>
-          <input type="checkbox" id="langToggle">
-          <span class="toggle-slider"></span>
-          <span class="toggle-lang-ar">AR</span>
-        </label>
+        <div class="header-toggles">
+          <label class="toggle-lang" aria-label="Toggle language">
+            <span class="toggle-lang-en">EN</span>
+            <input type="checkbox" id="langToggle">
+            <span class="toggle-slider"></span>
+            <span class="toggle-lang-ar">AR</span>
+          </label>
+          <label class="toggle-dark" aria-label="Toggle dark mode">
+            <input type="checkbox" id="darkToggle">
+            <span class="toggle-dark-icon">🌙</span>
+          </label>
+        </div>
       </div>
       <p class="subtitle" data-i18n="subtitle">Muslim Prayer Times Worldwide</p>
     </header>

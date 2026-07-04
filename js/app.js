@@ -157,7 +157,7 @@ const METHODS = [
   {id:5,name:"Egyptian General Authority of Survey",nameAr:"الهيئة المصرية العامة للمساحة"},
   {id:12,name:"Diyanet İşleri Başkanlığı, Turkey",nameAr:"ديانة تركيا"},
 ];
-const ATHAN_URL = "https://www.islamcan.com/audio/athan/azan1.mp3";
+const ATHAN_URL = "https://www.muslimcentral.com/audio/adhan/adhan.mp3";
 const ALADHAN_BASE = "https://api.aladhan.com/v1";
 
 const PRAYER_ORDER = ["Fajr","Dhuhr","Asr","Maghrib","Isha"];
@@ -167,6 +167,7 @@ let state = {
   city: localStorage.getItem("pt_city") || "",
   country: localStorage.getItem("pt_country") || "",
   lang: localStorage.getItem("pt_lang") || "en",
+  dark: localStorage.getItem("pt_dark") === "true",
   method: parseInt(localStorage.getItem("pt_method")) || 5,
   adjustment: parseInt(localStorage.getItem("pt_adjustment")) || 0,
   prayers: null,
@@ -200,13 +201,16 @@ function init() {
 
 function autoDetectLocation() {
   if (!navigator.geolocation) return;
+  document.getElementById("gpsBtn").disabled = true;
   navigator.geolocation.getCurrentPosition(
     (pos) => {
       const {latitude,longitude} = pos.coords;
-      fetchByCoords(latitude,longitude);
+      reverseGeocode(latitude,longitude);
     },
-    () => {},
-    {enableHighAccuracy:true,timeout:8000}
+    () => {
+      document.getElementById("gpsBtn").disabled = false;
+    },
+    {enableHighAccuracy:true,timeout:10000}
   );
 }
 
@@ -235,6 +239,14 @@ function restoreState() {
   document.getElementById("methodSelect").value = state.method;
   document.getElementById("adjustmentRange").value = state.adjustment;
   document.getElementById("adjustmentValue").textContent = state.adjustment > 0 ? `+${state.adjustment}` : state.adjustment;
+  document.getElementById("darkToggle").checked = state.dark;
+  if (state.dark) setDarkMode(true);
+}
+
+function setDarkMode(on) {
+  state.dark = on;
+  localStorage.setItem("pt_dark",on);
+  document.documentElement.setAttribute("data-theme",on?"dark":"light");
 }
 
 function setupEventListeners() {
@@ -243,6 +255,9 @@ function setupEventListeners() {
   document.getElementById("langToggle").addEventListener("change",e => setLanguage(e.target.checked?"ar":"en"));
   document.getElementById("testAthanBtn").addEventListener("click",playAthan);
   document.getElementById("coffeeBtn").addEventListener("click",copyInstapay);
+  document.getElementById("darkToggle").addEventListener("change",function() {
+    setDarkMode(this.checked);
+  });
 
   document.getElementById("methodSelect").addEventListener("change",function() {
     state.method = parseInt(this.value);
@@ -366,29 +381,41 @@ function setLanguage(lang) {
 function detectLocation() {
   if (!navigator.geolocation) { showToast(TRANSLATIONS[state.lang].location_failed); return; }
   showToast(TRANSLATIONS[state.lang].detecting);
+  document.getElementById("gpsBtn").disabled = true;
   navigator.geolocation.getCurrentPosition(
-    pos => fetchByCoords(pos.coords.latitude,pos.coords.longitude),
-    () => showToast(TRANSLATIONS[state.lang].location_failed),
+    pos => reverseGeocode(pos.coords.latitude,pos.coords.longitude),
+    () => { showToast(TRANSLATIONS[state.lang].location_failed); document.getElementById("gpsBtn").disabled = false; },
     {enableHighAccuracy:true,timeout:10000}
   );
 }
 
-async function fetchByCoords(lat,lng) {
-  showToast(TRANSLATIONS[state.lang].fetching);
-  setLoading(true);
+async function reverseGeocode(lat,lng) {
+  showToast(TRANSLATIONS[state.lang].detecting);
+  document.getElementById("gpsBtn").disabled = true;
   try {
-    const r = await fetch(`${ALADHAN_BASE}/timingsByLatLng?lat=${lat}&lng=${lng}&method=${state.method}`);
+    const r = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=en`,
+      { headers: { "User-Agent": "PrayerTimesApp/1.0" } }
+    );
     const d = await r.json();
-    if (d.code === 200) {
-      processPrayerData(d);
-      state.city = ""; state.country = "";
-      localStorage.removeItem("pt_city"); localStorage.removeItem("pt_country");
-      document.getElementById("cityInput").value = "";
-      document.getElementById("countrySelect").value = "";
-      document.getElementById("locationDisplay").textContent = d.data.meta.timezone;
-    } else showToast(TRANSLATIONS[state.lang].error_fetch);
-  } catch { showToast(TRANSLATIONS[state.lang].error_fetch); }
-  finally { setLoading(false); }
+    const addr = d.address || {};
+    const city = addr.city || addr.town || addr.village || addr.municipality || addr.county || "";
+    const country = addr.country || "";
+    if (city && country) {
+      document.getElementById("cityInput").value = city;
+      document.getElementById("countrySelect").value = country;
+      state.city = city; state.country = country;
+      localStorage.setItem("pt_city",city); localStorage.setItem("pt_country",country);
+      await fetchPrayerTimes(city,country);
+    } else {
+      showToast(TRANSLATIONS[state.lang].location_failed);
+    }
+  } catch { showToast(TRANSLATIONS[state.lang].location_failed); }
+  finally { document.getElementById("gpsBtn").disabled = false; }
+}
+
+async function fetchByCoords(lat,lng) {
+  await reverseGeocode(lat,lng);
 }
 
 async function handleFetch() {
